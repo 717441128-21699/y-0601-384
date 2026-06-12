@@ -148,6 +148,7 @@ export type PageType =
   | 'tenants'
   | 'tenant-detail'
   | 'bills'
+  | 'expenses'
   | 'import'
   | 'reminders'
   | 'reconciliation'

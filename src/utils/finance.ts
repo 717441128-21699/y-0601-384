@@ -15,13 +15,14 @@ export const calculateBillTotal = (bill: Partial<Bill>): number => {
 export const calculatePropertyIncome = (
   propertyId: string,
   bills: Bill[],
+  leases: Lease[],
   period?: string
 ): number => {
   const propertyBills = bills.filter(b => {
-    const lease = getLeaseByBill(b, []);
+    const lease = getLeaseByBill(b, leases);
     if (!lease) return false;
     if (lease.propertyId !== propertyId) return false;
-    if (period && !isDateInPeriod(b.dueDate, period)) return false;
+    if (period && b.period !== period) return false;
     return b.status === 'paid' || b.status === 'partial';
   });
 
@@ -35,7 +36,10 @@ export const calculatePropertyExpense = (
 ): number => {
   const propertyExpenses = expenses.filter(e => {
     if (e.propertyId !== propertyId) return false;
-    if (period && !isDateInPeriod(e.expenseDate, period)) return false;
+    if (period) {
+      const expMonth = e.expenseDate.slice(0, 7);
+      if (expMonth !== period) return false;
+    }
     return true;
   });
 
@@ -46,10 +50,11 @@ export const calculatePropertyNetProfit = (
   propertyId: string,
   bills: Bill[],
   expenses: Expense[],
+  leases: Lease[],
   period?: string
 ): number => {
   return (
-    calculatePropertyIncome(propertyId, bills, period) -
+    calculatePropertyIncome(propertyId, bills, leases, period) -
     calculatePropertyExpense(propertyId, expenses, period)
   );
 };
@@ -131,7 +136,7 @@ export const calculatePropertyReport = (
   const propertyLeases = leases.filter(l => l.propertyId === property.id);
   const activeLease = propertyLeases.find(l => l.status === 'active');
 
-  const totalIncome = calculatePropertyIncome(property.id, bills, period);
+  const totalIncome = calculatePropertyIncome(property.id, bills, leases, period);
   const totalExpense = calculatePropertyExpense(property.id, expenses, period);
   const netProfit = totalIncome - totalExpense;
 

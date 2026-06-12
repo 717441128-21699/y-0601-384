@@ -4,6 +4,7 @@ import Dashboard from "@/pages/Dashboard";
 import PropertyList from "@/pages/PropertyList";
 import TenantList from "@/pages/TenantList";
 import BillList from "@/pages/BillList";
+import ExpenseList from "@/pages/ExpenseList";
 import ImportPage from "@/pages/ImportPage";
 import ReminderPage from "@/pages/ReminderPage";
 import ReconciliationPage from "@/pages/ReconciliationPage";
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="properties" element={<PropertyList />} />
           <Route path="tenants" element={<TenantList />} />
           <Route path="bills" element={<BillList />} />
+          <Route path="expenses" element={<ExpenseList />} />
           <Route path="import" element={<ImportPage />} />
           <Route path="reminders" element={<ReminderPage />} />
           <Route path="reconciliation" element={<ReconciliationPage />} />

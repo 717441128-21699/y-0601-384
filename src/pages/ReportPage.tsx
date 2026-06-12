@@ -26,7 +26,14 @@ const ReportPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'property' | 'monthly'>('overview');
 
   const periods = useMemo(() => {
-    return [getCurrentPeriod(), ...getPreviousMonths(11)];
+    const current = getCurrentPeriod();
+    const future: string[] = [];
+    for (let i = 1; i <= 3; i++) {
+      const [y, m] = current.split('-').map(Number);
+      const d = new Date(y, m - 1 + i, 1);
+      future.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    }
+    return [...future.reverse(), current, ...getPreviousMonths(11)];
   }, []);
 
   const currentSummary = useMemo(() => {
@@ -38,7 +45,7 @@ const ReportPage: React.FC = () => {
   }, [selectedPeriod, getPropertyReports]);
 
   const trendData = useMemo(() => {
-    const months = getPreviousMonths(5).reverse();
+    const months = getPreviousMonths(6, selectedPeriod);
     return months.map(month => {
       const summary = getMonthlySummary(month);
       return {
@@ -48,7 +55,7 @@ const ReportPage: React.FC = () => {
         净利润: summary.netProfit,
       };
     });
-  }, [getMonthlySummary]);
+  }, [getMonthlySummary, selectedPeriod]);
 
   const expenseBreakdown = useMemo(() => {
     const categories: Record<string, number> = {};
@@ -91,7 +98,7 @@ const ReportPage: React.FC = () => {
   }, [expenses, selectedPeriod]);
 
   const yearlyData = useMemo(() => {
-    const months = getPreviousMonths(11).reverse();
+    const months = getPreviousMonths(12, selectedPeriod);
     return months.map(month => {
       const summary = getMonthlySummary(month);
       return {
@@ -100,10 +107,10 @@ const ReportPage: React.FC = () => {
         支出: summary.totalExpense,
       };
     });
-  }, [getMonthlySummary]);
+  }, [getMonthlySummary, selectedPeriod]);
 
   const yearlyTotal = useMemo(() => {
-    const months = getPreviousMonths(11).reverse();
+    const months = getPreviousMonths(12, selectedPeriod);
     let totalIncome = 0;
     let totalExpense = 0;
     let totalBillsPaid = 0;
@@ -126,9 +133,10 @@ const ReportPage: React.FC = () => {
       totalBillsPaid,
       totalBillsPending,
       totalBillsOverdue,
-      avgMonthlyProfit: Math.round((totalIncome - totalExpense) / 12),
+      avgMonthlyProfit: Math.round((totalIncome - totalExpense) / months.length),
+      monthsCount: months.length,
     };
-  }, [getMonthlySummary]);
+  }, [getMonthlySummary, selectedPeriod]);
 
   const handleExport = (type: 'ledger' | 'expenses' | 'all') => {
     if (type === 'ledger') exportLedger(selectedPeriod);

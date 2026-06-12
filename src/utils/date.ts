@@ -57,11 +57,17 @@ export const getMonthPeriod = (date: Date): string => {
   return format(date, 'yyyy-MM');
 };
 
-export const getPreviousMonths = (count: number): string[] => {
+export const getPreviousMonths = (count: number, anchorPeriod?: string): string[] => {
   const months: string[] = [];
-  const today = new Date();
+  let anchor: Date;
+  if (anchorPeriod) {
+    const [year, month] = anchorPeriod.split('-').map(Number);
+    anchor = new Date(year, month - 1, 15);
+  } else {
+    anchor = new Date();
+  }
   for (let i = count - 1; i >= 0; i--) {
-    months.push(getMonthPeriod(subMonths(today, i)));
+    months.push(getMonthPeriod(subMonths(anchor, i)));
   }
   return months;
 };

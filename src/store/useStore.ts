@@ -6,6 +6,7 @@ import {
 import { generateId, getCurrentPeriod, formatDate, getPreviousMonths, getMonthPeriod } from '../utils/date';
 import { 
   calculateBillTotal, calculateMonthlySummary, calculatePropertyReport,
+  calculatePropertyIncome, calculatePropertyExpense, calculatePropertyNetProfit,
   getLeaseByBill, getTenantByLease, getPropertyByLease
 } from '../utils/finance';
 import { 
@@ -13,6 +14,7 @@ import {
 } from '../utils/import';
 import { detectAnomaly } from '../utils/finance';
 import { generateCollectionText, generateReminders } from '../utils/reminder';
+import { exportLedgerToExcel, exportExpensesToExcel, exportAllData } from '../utils/export';
 import { getAllMockData } from '../mock/seed';
 import { parseISO, addDays } from 'date-fns';
 
@@ -483,34 +485,22 @@ export const useStore = create<AppState>()(
 
       getPropertyIncome: (propertyId, period) => {
         const state = get();
-        const propertyBills = state.bills.filter((b) => {
-          const lease = getLeaseByBill(b, state.leases);
-          if (!lease || lease.propertyId !== propertyId) return false;
-          if (period && b.period !== period) return false;
-          return b.status === 'paid' || b.status === 'partial';
-        });
-
-        return propertyBills.reduce((sum, b) => sum + (b.paidAmount || 0), 0);
+        return calculatePropertyIncome(propertyId, state.bills, state.leases, period);
       },
 
       getPropertyExpense: (propertyId, period) => {
         const state = get();
-        const propertyExpenses = state.expenses.filter((e) => {
-          if (e.propertyId !== propertyId) return false;
-          if (period) {
-            const expensePeriod = getMonthPeriod(parseISO(e.expenseDate));
-            if (expensePeriod !== period) return false;
-          }
-          return true;
-        });
-
-        return propertyExpenses.reduce((sum, e) => sum + e.amount, 0);
+        return calculatePropertyExpense(propertyId, state.expenses, period);
       },
 
       getPropertyNetProfit: (propertyId, period) => {
-        return (
-          get().getPropertyIncome(propertyId, period) -
-          get().getPropertyExpense(propertyId, period)
+        const state = get();
+        return calculatePropertyNetProfit(
+          propertyId,
+          state.bills,
+          state.expenses,
+          state.leases,
+          period
         );
       },
 
@@ -549,7 +539,6 @@ export const useStore = create<AppState>()(
       },
 
       exportLedger: (period) => {
-        const { exportLedgerToExcel } = require('../utils/export');
         const state = get();
         exportLedgerToExcel(
           state.bills,
@@ -561,13 +550,11 @@ export const useStore = create<AppState>()(
       },
 
       exportExpenses: (period) => {
-        const { exportExpensesToExcel } = require('../utils/export');
         const state = get();
         exportExpensesToExcel(state.expenses, state.properties, period);
       },
 
       exportAllData: () => {
-        const { exportAllData } = require('../utils/export');
         const state = get();
         exportAllData(
           state.bills,
